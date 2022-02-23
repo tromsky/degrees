@@ -1,7 +1,7 @@
 import csv
 import sys
 
-from util import Node, StackFrontier, QueueFrontier
+from util import Node, QueueFrontier, StackFrontier
 
 # Maps names to a set of corresponding person_ids
 names = {}
@@ -24,7 +24,7 @@ def load_data(directory):
             people[row["id"]] = {
                 "name": row["name"],
                 "birth": row["birth"],
-                "movies": set()
+                "movies": set(),
             }
             if row["name"].lower() not in names:
                 names[row["name"].lower()] = {row["id"]}
@@ -38,7 +38,7 @@ def load_data(directory):
             movies[row["id"]] = {
                 "title": row["title"],
                 "year": row["year"],
-                "stars": set()
+                "stars": set(),
             }
 
     # Load stars
@@ -92,8 +92,47 @@ def shortest_path(source, target):
     If no possible path, returns None.
     """
 
-    # TODO
-    raise NotImplementedError
+    # instantiate the frontier
+    frontier = QueueFrontier()
+
+    # create an explored set to store explored states and speed up the search
+    explored = set()
+
+    # instantiate the first node and add to the fronier
+    initial_node = Node(state=source, parent=None, action=None)
+    frontier.add(initial_node)
+
+    # continue while the frontier is not empty
+    while not frontier.empty():
+
+        # remove a node
+        node = frontier.remove()
+
+        # add node to the explored set to speed up search
+        explored.add(node.state)
+
+        for action, state in neighbors_for_person(node.state):
+
+            # only proceed if the state isn't already in the frontier nor the explored set
+            if not frontier.contains_state(state) and not state in explored:
+
+                # generate the current node
+                current_node = Node(state=state, parent=node, action=action)
+
+                # goal test, if the current state is the target, solution is found
+                if current_node.state == target:
+                    pairs = []
+
+                    # loop back to the root node, which has no parent
+                    while current_node.parent:
+                        pairs.append((current_node.action, current_node.state))
+                        current_node = current_node.parent
+
+                    # reverse the list so it reads from the root (source) to the target
+                    pairs.reverse()
+                    return pairs
+
+                frontier.add(current_node)
 
 
 def person_id_for_name(name):
